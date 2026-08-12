@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Session } from '@supabase/supabase-js';
 import { supabase, Profile } from './supabase';
 
+const ALLOWED_USERS = ['shibin', 'niveditha', 'nithin'];
 const toEmail = (username: string) => `${username}@protein.app`;
 
 // Ensure password meets Supabase's minimum 6 character requirement
@@ -34,7 +35,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select('*')
       .eq('id', userId)
       .single();
-    if (data) setUser(data as Profile);
+
+    if (data && ALLOWED_USERS.includes((data as Profile).username.toLowerCase())) {
+      setUser(data as Profile);
+    } else {
+      // Reject any user not in the 3 allowed container users list
+      await supabase.auth.signOut();
+      setUser(null);
+    }
   };
 
   useEffect(() => {
@@ -54,9 +62,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (username: string, password: string) => {
-    const email = toEmail(username);
+    const cleanUsername = username.toLowerCase().trim();
+
+    if (!ALLOWED_USERS.includes(cleanUsername)) {
+      throw new Error('Access denied. Only Shibin, Niveditha, and Nithin can access this container.');
+    }
+
+    const email = toEmail(cleanUsername);
     const securePassword = formatPassword(password);
-    const displayName = DISPLAY_NAMES[username] || username;
+    const displayName = DISPLAY_NAMES[cleanUsername] || cleanUsername;
 
     // 1. Try normal sign in
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
@@ -65,13 +79,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (signInError) {
-      // 2. If sign in fails, auto sign up via Supabase Auth API
+      // 2. Auto sign up via Supabase Auth API
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password: securePassword,
         options: {
           data: {
-            username,
+            username: cleanUsername,
             display_name: displayName,
           },
         },

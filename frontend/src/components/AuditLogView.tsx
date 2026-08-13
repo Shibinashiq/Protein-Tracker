@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format, parseISO, subDays } from 'date-fns';
 import { fetchLogs } from '@/lib/queries';
 import { ConsumptionLog } from '@/lib/supabase';
+import { USER_INITIALS } from '@/lib/auth';
 
 const USER_COLORS: Record<string, { bg: string; text: string; dot: string; border: string; gradient: string }> = {
   shibin:    { bg: 'bg-violet-500/15', text: 'text-violet-400',  dot: 'bg-violet-400',  border: 'border-violet-500/40', gradient: 'from-violet-600 to-purple-600' },
@@ -12,6 +13,11 @@ const USER_COLORS: Record<string, { bg: string; text: string; dot: string; borde
 
 function getColors(username: string) {
   return USER_COLORS[username] ?? { bg: 'bg-muted/40', text: 'text-muted-foreground', dot: 'bg-muted-foreground', border: 'border-border', gradient: 'from-slate-600 to-slate-700' };
+}
+
+function getInitials(username?: string, displayName?: string) {
+  if (username && USER_INITIALS[username.toLowerCase()]) return USER_INITIALS[username.toLowerCase()];
+  return (displayName ?? 'U').slice(0, 2).toUpperCase();
 }
 
 interface GroupedDay {
@@ -192,7 +198,7 @@ export default function AuditLogView() {
                       >
                         <div className="flex items-center gap-1">
                           <span className={`w-1.5 h-1.5 rounded-full ${u.color.dot}`} />
-                          <span className={`text-[11px] font-bold ${u.color.text}`}>{u.name}</span>
+                          <span className={`text-[11px] font-bold ${u.color.text} truncate`}>{u.name}</span>
                         </div>
                         <span className="text-xs font-bold mt-0.5">{u.scoops}</span>
                       </div>
@@ -241,7 +247,7 @@ export default function AuditLogView() {
                 { key: 'nithin', name: 'Nithin', scoops: selectedDay.userCounts.nithin, color: USER_COLORS.nithin },
               ].map(u => (
                 <div key={u.key} className={`p-2.5 rounded-xl border-2 ${u.color.border} ${u.color.bg} flex flex-col items-center justify-center shadow-sm`}>
-                  <span className={`text-xs font-bold ${u.color.text}`}>{u.name}</span>
+                  <span className={`text-xs font-bold ${u.color.text} text-center leading-tight`}>{u.name}</span>
                   <span className="text-sm font-bold mt-0.5">{u.scoops} scoops</span>
                 </div>
               ))}
@@ -255,12 +261,13 @@ export default function AuditLogView() {
 
               {selectedDay.logs.map((log) => {
                 const colors = getColors(log.username ?? '');
+                const initials = getInitials(log.username, log.display_name);
                 return (
                   <div key={log.id} className="p-3.5 rounded-xl bg-muted/40 border-2 border-border/70 flex items-center justify-between gap-3 shadow-sm">
-                    {/* Left: Avatar first 2 letters box with full border + User Name & Timestamp + Notes */}
+                    {/* Left: Avatar initial letter box (SA / NR / NI) + User Name & Timestamp + Notes */}
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${colors.gradient} text-white flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-md border-2 border-white/40 ring-2 ring-black/10`}>
-                        {(log.display_name ?? 'US').slice(0, 2)}
+                        {initials}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">

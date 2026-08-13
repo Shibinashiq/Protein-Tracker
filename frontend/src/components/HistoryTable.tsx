@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { fetchLogs } from '@/lib/queries';
 import { ConsumptionLog } from '@/lib/supabase';
+import { USER_INITIALS } from '@/lib/auth';
 
 const USER_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
   shibin:    { bg: 'bg-violet-500/15', text: 'text-violet-400',  dot: 'bg-violet-400'  },
@@ -99,12 +100,14 @@ export default function HistoryTable() {
               <tbody className="divide-y divide-border/30">
                 {filtered.map((log, i) => {
                   const colors = getColors(log.username ?? '');
+                  const initials = USER_INITIALS[log.username ?? ''] || (log.display_name ?? 'U').slice(0, 2).toUpperCase();
                   return (
                     <tr key={log.id} className="hover:bg-muted/20 transition-colors animate-fade-in" style={{ animationDelay: `${i * 0.03}s` }}>
                       <td className="py-3 px-3 font-medium">{formatDate(log.date)}</td>
                       <td className="py-3 px-3">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${colors.bg} ${colors.text}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+                          <span className="font-bold text-[10px] uppercase bg-black/10 px-1 py-0.5 rounded">{initials}</span>
                           {log.display_name}
                         </span>
                       </td>
@@ -126,12 +129,14 @@ export default function HistoryTable() {
           <div className="sm:hidden flex flex-col gap-2">
             {filtered.map((log, i) => {
               const colors = getColors(log.username ?? '');
+              const initials = USER_INITIALS[log.username ?? ''] || (log.display_name ?? 'U').slice(0, 2).toUpperCase();
               return (
                 <div key={log.id} className="bg-muted/20 rounded-xl p-3 animate-fade-in" style={{ animationDelay: `${i * 0.04}s` }}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium ${colors.bg} ${colors.text}`}>
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-medium ${colors.bg} ${colors.text}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+                        <span className="font-bold text-[10px] uppercase bg-black/10 px-1 py-0.5 rounded">{initials}</span>
                         {log.display_name}
                       </span>
                       <span className="text-xs font-medium">{formatDate(log.date)}</span>

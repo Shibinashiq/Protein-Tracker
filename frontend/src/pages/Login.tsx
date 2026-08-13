@@ -5,6 +5,7 @@ const USERS = [
   {
     username: 'shibin',
     displayName: 'Shibin',
+    initials: 'SA',
     emoji: '💪',
     color: 'from-violet-500 to-purple-600',
     shadow: 'shadow-violet-500/30',
@@ -14,6 +15,7 @@ const USERS = [
   {
     username: 'niveditha',
     displayName: 'Niveditha',
+    initials: 'NR',
     emoji: '🏋️',
     color: 'from-blue-500 to-cyan-500',
     shadow: 'shadow-blue-500/30',
@@ -23,6 +25,7 @@ const USERS = [
   {
     username: 'nithin',
     displayName: 'Nithin',
+    initials: 'NI',
     emoji: '🥤',
     color: 'from-emerald-500 to-teal-500',
     shadow: 'shadow-emerald-500/30',
@@ -68,7 +71,7 @@ export default function Login() {
         <div className="absolute top-1/2 right-0 w-72 h-72 rounded-full bg-emerald-600/5 blur-3xl" />
       </div>
 
-      <div className="w-full max-w-sm animate-fade-in">
+      <div className="w-full max-w-md animate-fade-in">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-600 to-purple-700 shadow-2xl shadow-violet-500/30 mb-4">
@@ -92,17 +95,17 @@ export default function Login() {
                   key={u.username}
                   type="button"
                   onClick={() => handleSelect(u)}
-                  className={`relative flex flex-col items-center gap-2.5 py-4 px-2 rounded-2xl border-2 transition-all duration-200
+                  className={`relative flex flex-col items-center gap-2 py-3 px-2 rounded-2xl border-2 transition-all duration-200
                     ${isSelected
                       ? `${u.ring} ${u.bg} shadow-lg`
                       : 'border-border hover:border-muted-foreground/30 hover:bg-muted/30'
                     }`}
                 >
-                  {/* Avatar */}
-                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${u.color} flex items-center justify-center shadow-lg ${u.shadow} transition-transform duration-200 ${isSelected ? 'scale-105' : ''}`}>
-                    <span className="text-xl">{u.emoji}</span>
+                  {/* Avatar with Initials (SA, NR, NI) */}
+                  <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${u.color} flex items-center justify-center text-white font-bold text-sm shadow-md border-2 border-white/40 transition-transform duration-200 ${isSelected ? 'scale-105' : ''}`}>
+                    <span>{u.initials}</span>
                   </div>
-                  <span className="text-xs font-semibold leading-none">{u.displayName}</span>
+                  <span className="text-[11px] font-semibold leading-tight text-center truncate w-full">{u.displayName}</span>
 
                   {/* Selected checkmark */}
                   {isSelected && (
@@ -119,8 +122,8 @@ export default function Login() {
 
           {/* Selected user label */}
           <div className={`flex items-center gap-2 mb-4 px-3 py-2 rounded-xl ${selectedUser.bg} border border-current/10`}>
-            <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${selectedUser.color} flex items-center justify-center text-xs`}>
-              {selectedUser.emoji}
+            <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${selectedUser.color} text-white font-bold flex items-center justify-center text-xs border border-white/30`}>
+              {selectedUser.initials}
             </div>
             <span className="text-sm font-medium">Signing in as <span className="font-bold">{selectedUser.displayName}</span></span>
           </div>

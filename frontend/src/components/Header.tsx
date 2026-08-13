@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '@/lib/auth';
+import { useAuth, USER_INITIALS } from '@/lib/auth';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -16,6 +16,7 @@ const USER_COLORS: Record<string, string> = {
 
 export default function Header({ darkMode, onToggleDark, activeTab, onTabChange }: HeaderProps) {
   const { user, logout } = useAuth();
+  const initials = user?.username ? USER_INITIALS[user.username] || user.display_name.slice(0, 2) : 'U';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -85,11 +86,11 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
               )}
             </button>
 
-            {/* User badge with first 2 letters */}
+            {/* User badge with initials */}
             {user && (
               <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-muted/40 border border-border/50">
                 <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${USER_COLORS[user.username] ?? 'from-violet-500 to-purple-600'} text-white flex items-center justify-center text-xs font-bold flex-shrink-0 border-2 border-white/40 shadow-sm`}>
-                  {user.display_name.slice(0, 2)}
+                  {initials}
                 </div>
                 <span className="text-sm font-medium hidden sm:block">{user.display_name}</span>
               </div>

@@ -8,10 +8,17 @@ const toEmail = (username: string) => `${username}@protein.app`;
 // Ensure password meets Supabase's minimum 6 character requirement
 const formatPassword = (pw: string) => (pw.length >= 6 ? pw : `${pw}_protein123`);
 
-const DISPLAY_NAMES: Record<string, string> = {
+export const DISPLAY_NAMES: Record<string, string> = {
   shibin: 'Shibin',
   niveditha: 'Niveditha',
   nithin: 'Nithin',
+};
+
+// Custom avatar initial mapping
+export const USER_INITIALS: Record<string, string> = {
+  shibin: 'SA',
+  niveditha: 'NR',
+  nithin: 'NI',
 };
 
 interface AuthContextType {
@@ -39,7 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data && ALLOWED_USERS.includes((data as Profile).username.toLowerCase())) {
       setUser(data as Profile);
     } else {
-      // Reject any user not in the 3 allowed container users list
       await supabase.auth.signOut();
       setUser(null);
     }

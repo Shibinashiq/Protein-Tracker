@@ -110,5 +110,27 @@ UPDATE auth.users SET email_confirmed_at = NOW() WHERE email_confirmed_at IS NUL
 -- Reload schema
 NOTIFY pgrst, 'reload schema';
 
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+)
+SELECT
+  '00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated',
+  'shibin@protein.app', crypt('auth', gen_salt('bf')), NOW(),
+  '{"provider":"email","providers":["email"]}', '{"username":"shibin","display_name":"Shibin Ashiq"}',
+  NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'shibin@protein.app');
+
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+)
+SELECT
+  '00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated',
+  'niveditha@protein.app', crypt('auth', gen_salt('bf')), NOW(),
+  '{"provider":"email","providers":["email"]}', '{"username":"niveditha","display_name":"Niveditha Reghunath"}',
+  NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'niveditha@protein.app');
+
 -- ─── 7. VERIFY ───────────────────────────────────────────────────
 SELECT total_scoops FROM public.protein_container;

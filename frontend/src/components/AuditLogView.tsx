@@ -256,29 +256,31 @@ export default function AuditLogView() {
               {selectedDay.logs.map((log) => {
                 const colors = getColors(log.username ?? '');
                 return (
-                  <div key={log.id} className="p-4 rounded-xl bg-muted/40 border border-border/60 flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
+                  <div key={log.id} className="p-3.5 rounded-xl bg-muted/40 border border-border/60 flex items-center justify-between gap-3">
+                    {/* Left: Avatar + User Name & Timestamp + Notes */}
+                    <div className="flex items-center gap-3 min-w-0">
                       <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${colors.gradient} text-white flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-md`}>
                         {(log.display_name ?? 'U').slice(0, 1)}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className={`font-bold text-sm ${colors.text}`}>{log.display_name}</span>
-                          <span className="text-xs text-muted-foreground">at {formatTime(log.created_at)}</span>
+                          <span className="text-xs text-muted-foreground font-medium">· {formatTime(log.created_at)}</span>
                         </div>
                         {log.notes ? (
-                          <p className="text-xs text-foreground/90 mt-1 bg-background/50 px-2.5 py-1.5 rounded-lg border border-border/40">
-                            💬 "{log.notes}"
-                          </p>
+                          <p className="text-xs text-foreground/90 mt-0.5 truncate">💬 {log.notes}</p>
                         ) : (
-                          <p className="text-xs text-muted-foreground/50 italic mt-1">No notes</p>
+                          <p className="text-xs text-muted-foreground/50 italic mt-0.5">No notes</p>
                         )}
                       </div>
                     </div>
 
-                    <span className="px-3 py-1 rounded-xl bg-primary/20 text-primary font-bold text-sm flex-shrink-0">
-                      +{log.scoops} {log.scoops === 1 ? 'scoop' : 'scoops'}
-                    </span>
+                    {/* Right: Badge vertically centered on right */}
+                    <div className="flex-shrink-0">
+                      <span className="px-3 py-1.5 rounded-xl bg-primary/20 text-primary font-bold text-xs whitespace-nowrap shadow-sm">
+                        +{log.scoops} {log.scoops === 1 ? 'scoop' : 'scoops'}
+                      </span>
+                    </div>
                   </div>
                 );
               })}

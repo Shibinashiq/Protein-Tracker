@@ -55,7 +55,7 @@ function StatCard({
         </div>
       </div>
       {progress !== undefined && (
-        <div className="mt-1">
+        <div className="mt-2">
           <div className="flex justify-between text-xs text-muted-foreground mb-1">
             <span>Container level</span>
             <span>{progress}%</span>
@@ -73,17 +73,21 @@ function StatCard({
 }
 
 export default function StatsCards({ userTotals, grandTotal, remaining, totalScoops, percentRemaining }: StatsCardsProps) {
+  // 73 total scoops divided across 3 users = 24.3 scoops per person
+  const fairSharePerUser = Math.round((totalScoops / 3) * 10) / 10;
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-      {/* Per-user cards */}
+    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      {/* Individual User Cards */}
       {userTotals.map((u, i) => {
         const config = USER_CONFIG[i] ?? USER_CONFIG[0];
+        const userRemaining = Math.max(0, Math.round((fairSharePerUser - u.total_scoops) * 10) / 10);
         return (
           <StatCard
             key={u.id}
             label={u.display_name}
             value={u.total_scoops}
-            sub="total scoops"
+            sub={`${userRemaining} left of ${fairSharePerUser}`}
             gradient={config.gradient}
             bg={config.bg}
             border={config.border}
@@ -92,6 +96,18 @@ export default function StatsCards({ userTotals, grandTotal, remaining, totalSco
           />
         );
       })}
+
+      {/* Fair Share Per Person Card (Second last card before Total Consumed & Remaining) */}
+      <StatCard
+        label="Share Per Person"
+        value={fairSharePerUser}
+        sub={`${totalScoops} total ÷ 3 users`}
+        gradient="from-indigo-500 to-purple-600"
+        bg="bg-indigo-500/10"
+        border="border-indigo-500/20"
+        textColor="text-indigo-400"
+        icon="⚖️"
+      />
 
       {/* Grand total */}
       <StatCard
@@ -105,7 +121,7 @@ export default function StatsCards({ userTotals, grandTotal, remaining, totalSco
         icon="📊"
       />
 
-      {/* Remaining */}
+      {/* Remaining in Container */}
       <StatCard
         label="Remaining"
         value={remaining}

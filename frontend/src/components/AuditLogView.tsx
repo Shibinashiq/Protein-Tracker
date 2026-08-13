@@ -5,9 +5,9 @@ import { fetchLogs } from '@/lib/queries';
 import { ConsumptionLog } from '@/lib/supabase';
 
 const USER_COLORS: Record<string, { bg: string; text: string; dot: string; border: string; gradient: string }> = {
-  shibin:    { bg: 'bg-violet-500/15', text: 'text-violet-400',  dot: 'bg-violet-400',  border: 'border-violet-500/30', gradient: 'from-violet-600 to-purple-600' },
-  niveditha: { bg: 'bg-blue-500/15',   text: 'text-blue-400',    dot: 'bg-blue-400',    border: 'border-blue-500/30',   gradient: 'from-blue-600 to-cyan-600' },
-  nithin:    { bg: 'bg-emerald-500/15',text: 'text-emerald-400', dot: 'bg-emerald-400', border: 'border-emerald-500/30', gradient: 'from-emerald-600 to-teal-600' },
+  shibin:    { bg: 'bg-violet-500/15', text: 'text-violet-400',  dot: 'bg-violet-400',  border: 'border-violet-500/40', gradient: 'from-violet-600 to-purple-600' },
+  niveditha: { bg: 'bg-blue-500/15',   text: 'text-blue-400',    dot: 'bg-blue-400',    border: 'border-blue-500/40',   gradient: 'from-blue-600 to-cyan-600' },
+  nithin:    { bg: 'bg-emerald-500/15',text: 'text-emerald-400', dot: 'bg-emerald-400', border: 'border-emerald-500/40', gradient: 'from-emerald-600 to-teal-600' },
 };
 
 function getColors(username: string) {
@@ -186,13 +186,13 @@ export default function AuditLogView() {
                     ].map((u) => (
                       <div
                         key={u.key}
-                        className={`p-2 rounded-xl border ${u.color.border} ${u.color.bg} flex flex-col items-center justify-center transition-all ${
-                          u.scoops > 0 ? 'opacity-100' : 'opacity-30'
+                        className={`p-2 rounded-xl border-2 ${u.color.border} ${u.color.bg} flex flex-col items-center justify-center transition-all ${
+                          u.scoops > 0 ? 'opacity-100 shadow-sm' : 'opacity-30'
                         }`}
                       >
                         <div className="flex items-center gap-1">
                           <span className={`w-1.5 h-1.5 rounded-full ${u.color.dot}`} />
-                          <span className={`text-[11px] font-semibold ${u.color.text}`}>{u.name}</span>
+                          <span className={`text-[11px] font-bold ${u.color.text}`}>{u.name}</span>
                         </div>
                         <span className="text-xs font-bold mt-0.5">{u.scoops}</span>
                       </div>
@@ -216,7 +216,7 @@ export default function AuditLogView() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setSelectedDay(null)} />
 
-          <div className="relative w-full max-w-lg glass-card p-6 animate-fade-in max-h-[85vh] flex flex-col">
+          <div className="relative w-full max-w-lg glass-card p-6 animate-fade-in max-h-[85vh] flex flex-col border-2 border-border/80 shadow-2xl">
             {/* Modal Header */}
             <div className="flex items-start justify-between mb-5 border-b border-border/50 pb-4">
               <div>
@@ -227,7 +227,7 @@ export default function AuditLogView() {
 
               <button
                 onClick={() => setSelectedDay(null)}
-                className="w-8 h-8 rounded-xl bg-muted/50 hover:bg-muted flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground"
+                className="w-8 h-8 rounded-xl bg-muted/50 hover:bg-muted flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground border border-border/50"
               >
                 ✕
               </button>
@@ -240,8 +240,8 @@ export default function AuditLogView() {
                 { key: 'niveditha', name: 'Niveditha', scoops: selectedDay.userCounts.niveditha, color: USER_COLORS.niveditha },
                 { key: 'nithin', name: 'Nithin', scoops: selectedDay.userCounts.nithin, color: USER_COLORS.nithin },
               ].map(u => (
-                <div key={u.key} className={`p-2.5 rounded-xl border ${u.color.border} ${u.color.bg} flex flex-col items-center justify-center`}>
-                  <span className={`text-xs font-semibold ${u.color.text}`}>{u.name}</span>
+                <div key={u.key} className={`p-2.5 rounded-xl border-2 ${u.color.border} ${u.color.bg} flex flex-col items-center justify-center shadow-sm`}>
+                  <span className={`text-xs font-bold ${u.color.text}`}>{u.name}</span>
                   <span className="text-sm font-bold mt-0.5">{u.scoops} scoops</span>
                 </div>
               ))}
@@ -256,11 +256,11 @@ export default function AuditLogView() {
               {selectedDay.logs.map((log) => {
                 const colors = getColors(log.username ?? '');
                 return (
-                  <div key={log.id} className="p-3.5 rounded-xl bg-muted/40 border border-border/60 flex items-center justify-between gap-3">
-                    {/* Left: Avatar + User Name & Timestamp + Notes */}
+                  <div key={log.id} className="p-3.5 rounded-xl bg-muted/40 border-2 border-border/70 flex items-center justify-between gap-3 shadow-sm">
+                    {/* Left: Avatar first 2 letters box with full border + User Name & Timestamp + Notes */}
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${colors.gradient} text-white flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-md`}>
-                        {(log.display_name ?? 'U').slice(0, 1)}
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${colors.gradient} text-white flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-md border-2 border-white/40 ring-2 ring-black/10`}>
+                        {(log.display_name ?? 'US').slice(0, 2)}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -275,9 +275,9 @@ export default function AuditLogView() {
                       </div>
                     </div>
 
-                    {/* Right: Badge vertically centered on right */}
+                    {/* Right: Badge vertically centered */}
                     <div className="flex-shrink-0">
-                      <span className="px-3 py-1.5 rounded-xl bg-primary/20 text-primary font-bold text-xs whitespace-nowrap shadow-sm">
+                      <span className="px-3 py-1.5 rounded-xl bg-primary/20 text-primary font-bold text-xs whitespace-nowrap shadow-sm border border-primary/30">
                         +{log.scoops} {log.scoops === 1 ? 'scoop' : 'scoops'}
                       </span>
                     </div>

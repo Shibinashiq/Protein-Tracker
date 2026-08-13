@@ -85,11 +85,11 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
               )}
             </button>
 
-            {/* User badge */}
+            {/* User badge with first 2 letters */}
             {user && (
               <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-muted/40 border border-border/50">
-                <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${USER_COLORS[user.username] ?? 'from-violet-500 to-purple-600'} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
-                  {user.display_name.slice(-1)}
+                <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${USER_COLORS[user.username] ?? 'from-violet-500 to-purple-600'} text-white flex items-center justify-center text-xs font-bold flex-shrink-0 border-2 border-white/40 shadow-sm`}>
+                  {user.display_name.slice(0, 2)}
                 </div>
                 <span className="text-sm font-medium hidden sm:block">{user.display_name}</span>
               </div>

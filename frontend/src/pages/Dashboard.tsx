@@ -145,37 +145,7 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
       />
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Daily Protein Reminder Banner */}
-        {!hasLoggedToday && !dismissReminder && user && (
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-violet-500/15 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-xl flex-shrink-0">
-                🔔
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-foreground">Daily Protein Reminder</h4>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Hey <span className="font-bold text-foreground">{user.display_name}</span>, you haven't logged your protein scoop for today yet!
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleQuickLog}
-                disabled={isPending}
-                className="btn-primary py-2 px-4 text-xs font-bold shadow-md shadow-violet-500/20 whitespace-nowrap"
-              >
-                ⚡ +1 Scoop Now
-              </button>
-              <button
-                onClick={() => setDismissReminder(true)}
-                className="p-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-        )}
+
 
         {/* Top Header Bar & Action Buttons */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">

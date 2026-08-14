@@ -11,12 +11,6 @@
       "destination": "/index.html"
     }
   ],
-  "crons": [
-    {
-      "path": "/api/send-reminders",
-      "schedule": "0 */3 * * *"
-    }
-  ],
   "headers": [
     {
       "source": "/index.html",

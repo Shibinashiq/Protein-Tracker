@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, USER_INITIALS } from '@/lib/auth';
 import { requestAndSubscribe } from '@/lib/notifications';
+import { useAppUpdate } from '@/lib/useAppUpdate';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -17,10 +18,12 @@ const USER_COLORS: Record<string, string> = {
 
 export default function Header({ darkMode, onToggleDark, activeTab, onTabChange }: HeaderProps) {
   const { user, session, logout } = useAuth();
+  const { updateAvailable, applyUpdate } = useAppUpdate();
   const initials = user?.username ? USER_INITIALS[user.username] || user.display_name.slice(0, 2) : 'U';
 
   const [notifState, setNotifState] = useState<'idle' | 'granted' | 'denied' | 'loading'>('idle');
   const [showIOSModal, setShowIOSModal] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -42,6 +45,11 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
     } else {
       setNotifState('denied');
     }
+  };
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await applyUpdate();
   };
 
   return (
@@ -95,6 +103,25 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
 
           {/* Right side controls */}
           <div className="flex items-center gap-1.5 sm:gap-3">
+            {/* Manual Refresh / Update App Button (Essential for iOS Standalone PWA) */}
+            <button
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              className={`relative w-9 h-9 rounded-xl border flex items-center justify-center transition-all duration-200 hover:shadow-md ${
+                updateAvailable
+                  ? 'border-violet-500/80 bg-violet-600 text-white shadow-lg shadow-violet-500/40 animate-pulse'
+                  : 'border-border bg-muted/30 hover:bg-muted/60 text-muted-foreground hover:text-foreground'
+              }`}
+              title={updateAvailable ? '⚡ New App Update Available! Click to apply' : 'Refresh App & Sync Features'}
+            >
+              {updateAvailable && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border-2 border-background animate-ping" />
+              )}
+              <svg className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+
             {/* Notification Bell */}
             <button
               onClick={handleNotificationToggle}

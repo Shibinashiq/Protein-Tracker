@@ -1,6 +1,7 @@
-// Service Worker for Phone Lock-Screen Push Notifications
+// Protein Tracker — Service Worker
+// Handles background push notifications on phone lock screen
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
@@ -8,34 +9,33 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 
-// Handle incoming background push notifications on phone lock screen
+// Handle push from Supabase Edge Function (lock-screen notification)
 self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : {};
-  const title = data.title || '💪 Protein Tracker Reminder';
-  const options = {
-    body: data.body || "Don't forget to log your daily protein scoop!",
-    icon: '/favicon.svg',
-    badge: '/favicon.svg',
-    vibrate: [200, 100, 200],
-    data: { url: '/' },
-  };
+  let data = { title: '💪 Protein Tracker', body: "Don't forget your protein scoop today!" };
+  try {
+    if (event.data) data = event.data.json();
+  } catch (_) {}
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    self.registration.showNotification(data.title || '💪 Protein Tracker', {
+      body: data.body || "Don't forget your daily protein scoop!",
+      icon: '/favicon.svg',
+      badge: '/favicon.svg',
+      data: { url: data.url || '/' },
+    })
+  );
 });
 
-// Handle user clicking the phone lock screen notification
+// Handle tap on notification — open the app
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/';
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url === '/' && 'focus' in client) {
-          return client.focus();
-        }
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if ('focus' in client) return client.focus();
       }
-      if (clients.openWindow) {
-        return clients.openWindow('/');
-      }
+      if (clients.openWindow) return clients.openWindow(targetUrl);
     })
   );
 });

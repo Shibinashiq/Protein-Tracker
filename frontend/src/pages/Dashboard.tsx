@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { fetchDashboard, fetchWeekly, fetchMonthly, fetchLogs, addLog } from '@/lib/queries';
 import { useAuth } from '@/lib/auth';
-import { checkAndSend3HourReminder } from '@/lib/notifications';
+
 import Header from '@/components/Header';
 import StatsCards from '@/components/StatsCards';
 import WeeklyChart from '@/components/WeeklyChart';
@@ -64,12 +64,7 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
   );
   const hasLoggedToday = userLogsToday.length > 0;
 
-  // Trigger 3-hour interval notification reminder if user hasn't logged today
-  useEffect(() => {
-    if (user?.display_name && logsData) {
-      checkAndSend3HourReminder(user.display_name, hasLoggedToday);
-    }
-  }, [user?.display_name, hasLoggedToday, logsData]);
+  // Background push notifications handled by Supabase Edge Function (send-reminders)
 
   // Quick 1-Tap +1 Scoop Mutation
   const quickLogMutation = useMutation({

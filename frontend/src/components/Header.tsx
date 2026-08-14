@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, USER_INITIALS } from '@/lib/auth';
-import { sendImmediateNotification } from '@/lib/notifications';
+import { requestAndSubscribe } from '@/lib/notifications';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -16,37 +16,31 @@ const USER_COLORS: Record<string, string> = {
 };
 
 export default function Header({ darkMode, onToggleDark, activeTab, onTabChange }: HeaderProps) {
-  const { user, logout } = useAuth();
+  const { user, session, logout } = useAuth();
   const initials = user?.username ? USER_INITIALS[user.username] || user.display_name.slice(0, 2) : 'U';
 
-  const [notifGranted, setNotifGranted] = useState(false);
+  const [notifState, setNotifState] = useState<'idle' | 'granted' | 'denied' | 'loading'>('idle');
   const [showIOSModal, setShowIOSModal] = useState(false);
 
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'granted') {
-      setNotifGranted(true);
+      setNotifState('granted');
     }
   }, []);
 
-  const handleNotificationToggle = () => {
-    // Apple iOS restriction check: Chrome on iOS doesn't support Web Notifications directly in browser tab
-    if (!('Notification' in window)) {
-      setShowIOSModal(true);
-      return;
-    }
+  const handleNotificationToggle = async () => {
+    if (!session?.user?.id || !user) return;
 
-    if (Notification.permission === 'granted') {
-      setNotifGranted(true);
-      sendImmediateNotification(user?.display_name || 'there');
+    setNotifState('loading');
+    const result = await requestAndSubscribe(session.user.id, user.username, user.display_name);
+
+    if (result === 'ios') {
+      setShowIOSModal(true);
+      setNotifState('idle');
+    } else if (result === 'granted') {
+      setNotifState('granted');
     } else {
-      Notification.requestPermission().then((permission) => {
-        if (permission === 'granted') {
-          setNotifGranted(true);
-          sendImmediateNotification(user?.display_name || 'there');
-        } else {
-          alert('Notification permission was denied in your browser settings.');
-        }
-      });
+      setNotifState('denied');
     }
   };
 
@@ -66,7 +60,7 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
               </div>
             </div>
 
-            {/* Navigation Tabs - Icons only on mobile, Icon + Text on desktop */}
+            {/* Navigation Tabs */}
             <nav className="flex items-center gap-1 bg-muted/30 p-1 rounded-xl border border-border/50">
               <button
                 onClick={() => onTabChange('dashboard')}
@@ -101,19 +95,35 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
 
           {/* Right side controls */}
           <div className="flex items-center gap-1.5 sm:gap-3">
-            {/* Notification Bell toggle */}
+            {/* Notification Bell */}
             <button
               onClick={handleNotificationToggle}
+              disabled={notifState === 'loading'}
               className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all duration-200 hover:shadow-md ${
-                notifGranted
+                notifState === 'granted'
                   ? 'border-amber-500/40 bg-amber-500/10 text-amber-400'
+                  : notifState === 'denied'
+                  ? 'border-red-500/40 bg-red-500/10 text-red-400'
                   : 'border-border bg-muted/30 hover:bg-muted/60 text-muted-foreground hover:text-foreground'
               }`}
-              title={notifGranted ? 'Notifications Active (Click for instant test notification)' : 'Enable Notifications'}
+              title={
+                notifState === 'granted'
+                  ? 'Push Notifications Active ✅'
+                  : notifState === 'denied'
+                  ? 'Notifications Blocked ❌ — Enable in browser settings'
+                  : 'Enable Push Notifications'
+              }
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
+              {notifState === 'loading' ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              )}
             </button>
 
             {/* Dark mode toggle */}
@@ -133,7 +143,7 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
               )}
             </button>
 
-            {/* User badge with initials */}
+            {/* User badge */}
             {user && (
               <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-muted/40 border border-border/50">
                 <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${USER_COLORS[user.username] ?? 'from-violet-500 to-purple-600'} text-white flex items-center justify-center text-xs font-bold flex-shrink-0 border-2 border-white/40 shadow-sm`}>
@@ -162,32 +172,22 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
           <div className="w-full max-w-sm glass-card p-6 border-2 border-violet-500/40 shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-xl flex-shrink-0">
-                📱
-              </div>
+              <div className="w-10 h-10 rounded-2xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-xl flex-shrink-0">📱</div>
               <div>
                 <h3 className="font-bold text-base">iPhone Push Setup</h3>
                 <p className="text-xs text-muted-foreground">Apple iOS Notification Rule</p>
               </div>
             </div>
-
             <p className="text-xs text-foreground/90 leading-relaxed">
               Apple blocks notifications inside Chrome on iOS. To enable push notifications on your iPhone:
             </p>
-
             <ol className="space-y-2 text-xs text-muted-foreground list-decimal list-inside bg-muted/30 p-3 rounded-xl border border-border/50">
               <li>Open this app link in <strong className="text-foreground">Safari</strong></li>
               <li>Tap <strong className="text-foreground">Share (📤 icon at bottom)</strong></li>
               <li>Tap <strong className="text-foreground">"Add to Home Screen"</strong></li>
               <li>Open the app from your iPhone home screen & tap the Bell 🔔 icon!</li>
             </ol>
-
-            <button
-              onClick={() => setShowIOSModal(false)}
-              className="btn-primary w-full py-2.5 text-xs font-bold"
-            >
-              Got it!
-            </button>
+            <button onClick={() => setShowIOSModal(false)} className="btn-primary w-full py-2.5 text-xs font-bold">Got it!</button>
           </div>
         </div>
       )}

@@ -6,8 +6,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')!;
-const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')!;
+const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY') ?? 'BIJKCjc8yN3YsgR-0zFCgSyLAxaQIT9-H4qU0qaIZd9htCr_8GcgtGzrabQJNakqvuk2yFSUqORRM2T8fFFBomo';
+const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY') ?? 'rshHm2OupT9ROStkNAmiUN59_glpS3nEalsCbHH4K5c';
 const vapidSubject = Deno.env.get('VAPID_SUBJECT') ?? 'mailto:admin@proteintracker.app';
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);

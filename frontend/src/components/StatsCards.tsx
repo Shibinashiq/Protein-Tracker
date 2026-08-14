@@ -124,11 +124,11 @@ export default function StatsCards({
         );
       })}
 
-      {/* Fair Share Per Person Card */}
+      {/* Your Scoop Share Card */}
       <StatCard
-        label="Share Per Person"
+        label="Your Scoop Share"
         value={fairSharePerUser}
-        sub="Target per user"
+        sub="24.3 scoops per person"
         gradient="from-cyan-500 to-blue-600"
         bg="bg-cyan-500/10"
         border="border-cyan-500/20"

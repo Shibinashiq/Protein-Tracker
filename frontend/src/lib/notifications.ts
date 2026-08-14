@@ -33,7 +33,7 @@ export interface SubscribeResult {
 }
 
 // ─── Subscribe & save to Supabase ─────────────────────────────────────────────
-export async function subscribeToPush(userId: string, username: string): Promise<{ success: boolean; error?: string }> {
+export async function subscribeToPush(userId: string, username: string, displayName?: string): Promise<{ success: boolean; error?: string }> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     return { success: false, error: 'Push notifications not supported on this browser' };
   }
@@ -69,6 +69,7 @@ export async function subscribeToPush(userId: string, username: string): Promise
       {
         user_id: userId,
         username,
+        display_name: displayName || username,
         endpoint,
         p256dh: keys.p256dh,
         auth: keys.auth,
@@ -99,7 +100,7 @@ export async function requestAndSubscribe(userId: string, username: string, disp
 
   if (permission !== 'granted') return { status: 'denied', savedToDb: false };
 
-  const subRes = await subscribeToPush(userId, username);
+  const subRes = await subscribeToPush(userId, username, displayName);
   if (subRes.success) {
     sendLocalNotification(
       '💪 Protein Tracker — Reminders Active!',

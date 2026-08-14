@@ -29,9 +29,9 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'granted' && session?.user?.id && user?.username) {
       setNotifState('granted');
-      subscribeToPush(session.user.id, user.username);
+      subscribeToPush(session.user.id, user.username, user.display_name);
     }
-  }, [session?.user?.id, user?.username]);
+  }, [session?.user?.id, user?.username, user?.display_name]);
 
   const handleNotificationToggle = async () => {
     if (!session?.user?.id || !user) return;

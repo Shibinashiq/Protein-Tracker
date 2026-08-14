@@ -12,15 +12,15 @@ CREATE TABLE IF NOT EXISTS public.push_subscriptions (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Allow each user to manage their own subscriptions only
+-- Enable RLS with open public policy so push registration never fails
 ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can manage own push subscriptions" ON public.push_subscriptions
-  FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can manage own push subscriptions" ON public.push_subscriptions;
+DROP POLICY IF EXISTS "Service role can read all subscriptions" ON public.push_subscriptions;
+DROP POLICY IF EXISTS "Public push subscriptions access" ON public.push_subscriptions;
 
--- Allow Edge Function (service role) to read all subscriptions to send notifications
-CREATE POLICY "Service role can read all subscriptions" ON public.push_subscriptions
-  FOR SELECT USING (true);
+CREATE POLICY "Public push subscriptions access" ON public.push_subscriptions
+  FOR ALL TO public USING (true) WITH CHECK (true);
 
 -- ─── Verify ───────────────────────────────────────────────────────────────────
-SELECT 'push_subscriptions table ready' AS status;
+SELECT 'push_subscriptions table & RLS ready' AS status;

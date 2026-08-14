@@ -33,7 +33,7 @@ export default function AuditLogView() {
 
   const [filterUser, setFilterUser] = useState('all');
   const [selectedDay, setSelectedDay] = useState<GroupedDay | null>(null);
-  const [customDateFilter, setCustomDateFilter] = useState('');
+  const [customDateFilter, setCustomDateFilter] = useState(todayStr);
 
   const { data, isLoading } = useQuery({
     queryKey: ['logs'],
@@ -88,36 +88,52 @@ export default function AuditLogView() {
     <div className="space-y-6 animate-fade-in">
       {/* Header controls & filters */}
       <div className="glass-card p-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold flex items-center gap-2">
               <span className="text-2xl">📅</span> Daily Audit Calendar
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Click any date card to view who logged scoops and details for that day
+              {customDateFilter === todayStr
+                ? "Showing Today's entries by default · Click date picker or 'All Dates' to view other days"
+                : 'Click any date card to view who logged scoops and details for that day'}
             </p>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Quick Presets: Today / All Dates */}
+            <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border/50">
+              <button
+                onClick={() => setCustomDateFilter(todayStr)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  customDateFilter === todayStr
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => setCustomDateFilter('')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  customDateFilter === ''
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+              >
+                All Dates
+              </button>
+            </div>
+
             {/* Pick specific date */}
             <div>
               <input
                 type="date"
                 value={customDateFilter}
                 onChange={(e) => setCustomDateFilter(e.target.value)}
-                className="px-3 py-1.5 rounded-xl bg-muted/50 border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 text-xs"
+                className="px-3 py-1.5 rounded-xl bg-muted/50 border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 text-xs font-medium"
               />
             </div>
-
-            {/* Clear date filter button */}
-            {customDateFilter && (
-              <button
-                onClick={() => setCustomDateFilter('')}
-                className="px-2.5 py-1.5 rounded-xl bg-muted/40 hover:bg-muted text-xs text-muted-foreground transition-colors"
-              >
-                Clear Date
-              </button>
-            )}
 
             {/* User Filter */}
             <select

@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd frontend && npm install && npm run build",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": "frontend/dist",
   "rewrites": [
     {
@@ -14,7 +14,7 @@
   "crons": [
     {
       "path": "/api/send-reminders",
-      "schedule": "*/2 * * * *"
+      "schedule": "0 */3 * * *"
     }
   ],
   "headers": [

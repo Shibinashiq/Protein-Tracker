@@ -1,0 +1,70 @@
+name: 2-Minute Protein Tracker Push Notifications Cron
+
+on:
+  schedule:
+    - cron: '*/5 * * * *' # Every 5 minutes via GitHub Actions
+  workflow_dispatch:
+
+jobs:
+  send-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Send Background Push Notifications
+        run: |
+          node -e "
+          const webpush = require('./frontend/node_modules/web-push');
+          const { createClient } = require('./frontend/node_modules/@supabase/supabase-js');
+
+          const supabase = createClient(
+            'https://unxmqtyfetbolhgujpma.supabase.co',
+            'sb_publishable_nSYm0FRq4v3QlKkiJH54TA_6Bdr_Y5e'
+          );
+
+          const VAPID_PUBLIC_KEY = 'BIJKCjc8yN3YsgR-0zFCgSyLAxaQIT9-H4qU0qaIZd9htCr_8GcgtGzrabQJNakqvuk2yFSUqORRM2T8fFFBomo';
+          const VAPID_PRIVATE_KEY = 'rshHm2OupT9ROStkNAmiUN59_glpS3nEalsCbHH4K5c';
+          const VAPID_SUBJECT = 'mailto:admin@proteintracker.app';
+
+          webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+
+          async function sendPush() {
+            const today = new Date().toISOString().slice(0, 10);
+            const { data: logs } = await supabase.from('consumption_logs').select('user_id').eq('date', today);
+            const loggedUserIds = new Set((logs ?? []).map(l => l.user_id));
+
+            const { data: subs } = await supabase.from('push_subscriptions').select('*');
+            for (const sub of (subs || [])) {
+              if (loggedUserIds.has(sub.user_id)) {
+                console.log('Skipped user already logged today:', sub.username);
+                continue;
+              }
+              const displayNames = { shibin: 'Shibin', niveditha: 'Niveditha', nithin: 'Nithin' };
+              const name = displayNames[sub.username] || sub.username;
+              const pushSubscription = { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } };
+              const payload = JSON.stringify({
+                title: '⏰ Protein Tracker Reminder',
+                body: \`Hey \${name}, don't forget your daily protein scoop! Tap to log +1 scoop ⚡\`,
+                url: '/'
+              });
+              try {
+                const res = await webpush.sendNotification(pushSubscription, payload);
+                console.log('SENT SUCCESS to:', sub.username, 'Status:', res.statusCode);
+              } catch (err) {
+                console.error('Push err:', err.statusCode, err.message);
+              }
+            }
+          }
+          sendPush();
+          "

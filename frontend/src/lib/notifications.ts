@@ -3,13 +3,27 @@
 
 import { supabase } from './supabase';
 
-const VAPID_PUBLIC_KEY = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string) || 'BIJKCjc8yN3YsgR-0zFCgSyLAxaQIT9-H4qU0qaIZd9htCr_8GcgtGzrabQJNakqvuk2yFSUqORRM2T8fFFBomo';
+// Valid 65-byte uncompressed P-256 public key starting with 0x04 (required by Safari WebKit WebPush API)
+const HARDCODED_VAPID_KEY = 'BIJKCjc8yN3YsgR-0zFCgSyLAxaQIT9-H4qU0qaIZd9htCr_8GcgtGzrabQJNakqvuk2yFSUqORRM2T8fFFBomo';
+
+function getVapidKey(): string {
+  const envKey = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string)?.trim();
+  if (envKey && envKey.startsWith('BI') && envKey.length >= 85) {
+    return envKey;
+  }
+  return HARDCODED_VAPID_KEY;
+}
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const cleanStr = base64String.trim().replace(/^["']|["']$/g, '');
+  const padding = '='.repeat((4 - (cleanStr.length % 4)) % 4);
+  const base64 = (cleanStr + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = window.atob(base64);
-  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
 }
 
 export interface SubscribeResult {
@@ -23,9 +37,8 @@ export async function subscribeToPush(userId: string, username: string): Promise
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     return { success: false, error: 'Push notifications not supported on this browser' };
   }
-  if (!VAPID_PUBLIC_KEY) {
-    return { success: false, error: 'VITE_VAPID_PUBLIC_KEY environment variable missing' };
-  }
+
+  const vapidKey = getVapidKey();
 
   try {
     const reg = await navigator.serviceWorker.ready;
@@ -36,9 +49,11 @@ export async function subscribeToPush(userId: string, username: string): Promise
       try { await existing.unsubscribe(); } catch (_) {}
     }
 
+    const applicationServerKey = urlBase64ToUint8Array(vapidKey);
+
     const subscription = await reg.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer,
+      applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
     });
 
     const json = subscription.toJSON();

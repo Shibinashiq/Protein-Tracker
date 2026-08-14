@@ -29,16 +29,25 @@ export async function subscribeToPush(userId: string, username: string): Promise
 
   try {
     const reg = await navigator.serviceWorker.ready;
+
+    // Clear old invalid subscription if present to ensure fresh VAPID key binding
     const existing = await reg.pushManager.getSubscription();
-    const subscription = existing ?? await reg.pushManager.subscribe({
+    if (existing) {
+      try { await existing.unsubscribe(); } catch (_) {}
+    }
+
+    const subscription = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer,
     });
 
-    const { endpoint, keys } = subscription.toJSON() as {
-      endpoint: string;
-      keys: { p256dh: string; auth: string };
-    };
+    const json = subscription.toJSON();
+    const endpoint = json.endpoint ?? subscription.endpoint;
+    const keys = json.keys as { p256dh: string; auth: string } | undefined;
+
+    if (!endpoint || !keys?.p256dh || !keys?.auth) {
+      return { success: false, error: 'Failed to extract push encryption keys from browser' };
+    }
 
     // Upsert subscription into Supabase push_subscriptions table
     const { error } = await supabase.from('push_subscriptions').upsert(

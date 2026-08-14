@@ -52,8 +52,8 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
         });
       } else {
         setNotifModalInfo({
-          title: '⚠️ Database RLS Permission Required',
-          message: `Notification permission is granted on your phone, BUT your Supabase database blocked saving the token due to RLS policies. Please run the SQL script in Supabase SQL Editor to enable 2-minute background push notifications!\n\nError: ${result.error || 'Row-level security policy violation'}`,
+          title: '⚠️ Subscription Sync Error',
+          message: `Notification permission is granted on your phone, BUT saving the push token returned: ${result.error || 'Unknown error'}`,
           success: false,
         });
       }

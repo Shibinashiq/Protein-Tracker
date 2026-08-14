@@ -67,6 +67,9 @@ CREATE POLICY "logs_select" ON public.consumption_logs FOR SELECT TO authenticat
 DROP POLICY IF EXISTS "logs_insert" ON public.consumption_logs;
 CREATE POLICY "logs_insert" ON public.consumption_logs FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "logs_delete" ON public.consumption_logs;
+CREATE POLICY "logs_delete" ON public.consumption_logs FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
 -- ─── 5. AUTO-CONFIRM EMAILS TRIGGER ──────────────────────────────
 CREATE OR REPLACE FUNCTION public.auto_confirm_email()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$

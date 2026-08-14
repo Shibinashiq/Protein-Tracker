@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { addLog } from '@/lib/queries';
+import { addLog, fetchUserLogsOnDate } from '@/lib/queries';
 import { useAuth } from '@/lib/auth';
 
 interface AddEntryFormProps {
@@ -15,6 +15,8 @@ export default function AddEntryForm({ onClose }: AddEntryFormProps) {
 
   const [form, setForm] = useState({ date: today, scoops: 1, notes: '' });
   const [error, setError] = useState('');
+  const [duplicateWarning, setDuplicateWarning] = useState<{ count: number; totalScoops: number } | null>(null);
+  const [confirmedDuplicate, setConfirmedDuplicate] = useState(false);
 
   const mutation = useMutation({
     mutationFn: () => addLog(session!.user.id, form.date, form.scoops, form.notes || undefined),
@@ -30,12 +32,22 @@ export default function AddEntryForm({ onClose }: AddEntryFormProps) {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (form.scoops < 1 || form.scoops > 100) {
       setError('Scoops must be between 1 and 100');
       return;
+    }
+
+    // Check for existing entries on the selected date
+    if (!confirmedDuplicate && session?.user?.id) {
+      const existing = await fetchUserLogsOnDate(session.user.id, form.date);
+      if (existing.length > 0) {
+        const totalExisting = existing.reduce((s, l) => s + l.scoops, 0);
+        setDuplicateWarning({ count: existing.length, totalScoops: totalExisting });
+        return; // Wait for user to confirm
+      }
     }
     mutation.mutate();
   };
@@ -124,6 +136,40 @@ export default function AddEntryForm({ onClose }: AddEntryFormProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
               {error}
+            </div>
+          )}
+
+          {/* Duplicate Entry Warning */}
+          {duplicateWarning && (
+            <div className="bg-amber-500/10 border-2 border-amber-500/40 rounded-xl p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">⚠️</span>
+                <div>
+                  <p className="text-xs font-bold text-amber-400">Already logged on this date!</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {duplicateWarning.count} existing {duplicateWarning.count === 1 ? 'entry' : 'entries'} · {duplicateWarning.totalScoops} scoop{duplicateWarning.totalScoops > 1 ? 's' : ''} logged
+                  </p>
+                </div>
+              </div>
+              <p className="text-[11px] text-amber-300/90 leading-relaxed">
+                Adding this will mark <strong>{duplicateWarning.totalScoops + form.scoops} total scoops</strong> for {form.date}. Only confirm if you actually took a second serving!
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDuplicateWarning(null)}
+                  className="flex-1 py-2 rounded-xl border border-border bg-muted/30 text-xs font-semibold hover:bg-muted/60 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setConfirmedDuplicate(true); setDuplicateWarning(null); mutation.mutate(); }}
+                  className="flex-1 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold transition-all"
+                >
+                  Yes, Log {form.scoops} More Scoop{form.scoops > 1 ? 's' : ''}
+                </button>
+              </div>
             </div>
           )}
 

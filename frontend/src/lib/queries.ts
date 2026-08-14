@@ -168,3 +168,23 @@ export async function addLog(userId: string, date: string, scoops: number, notes
 
   if (error) throw new Error(error.message);
 }
+
+// ─── Check if user already has log(s) on a specific date ──────────────────────
+
+export async function fetchUserLogsOnDate(userId: string, date: string): Promise<{ id: string; scoops: number }[]> {
+  const { data } = await supabase
+    .from('consumption_logs')
+    .select('id, scoops')
+    .eq('user_id', userId)
+    .eq('date', date)
+    .order('created_at', { ascending: true });
+  return data ?? [];
+}
+
+// ─── Delete a specific log entry by ID ────────────────────────────────────────
+
+export async function deleteLog(logId: string) {
+  const { error } = await supabase.from('consumption_logs').delete().eq('id', logId);
+  if (error) throw new Error(error.message);
+}
+

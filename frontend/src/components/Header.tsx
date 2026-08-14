@@ -46,8 +46,8 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
       setNotifState('granted');
       if (result.savedToDb) {
         setNotifModalInfo({
-          title: '🔔 Reminders Active! (2-Min Gap)',
-          message: `Hey ${user.display_name}, your phone token is registered in Supabase! You will receive background notifications every 2 minutes if you haven't logged protein today.`,
+          title: '🔔 Reminders Active! (3-Hour Gap)',
+          message: `Hey ${user.display_name}, your phone token is registered in Supabase! You will receive background notifications every 3 hours if you haven't logged protein today.`,
           success: true,
         });
       } else {

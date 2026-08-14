@@ -1,8 +1,8 @@
-name: 2-Minute Protein Tracker Push Notifications Cron
+name: 3-Hour Protein Tracker Push Notifications Cron
 
 on:
   schedule:
-    - cron: '*/5 * * * *' # Every 5 minutes via GitHub Actions
+    - cron: '0 */3 * * *' # Every 3 hours via GitHub Actions
   workflow_dispatch:
 
 jobs:

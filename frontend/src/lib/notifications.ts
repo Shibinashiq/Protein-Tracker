@@ -103,7 +103,7 @@ export async function requestAndSubscribe(userId: string, username: string, disp
   if (subRes.success) {
     sendLocalNotification(
       '💪 Protein Tracker — Reminders Active!',
-      `Hey ${displayName}, reminders are ACTIVE! You will be reminded every 2 minutes if you forget to log your protein scoop.`
+      `Hey ${displayName}, reminders are ACTIVE! You will be reminded every 3 hours if you forget to log your protein scoop.`
     );
     return { status: 'granted', savedToDb: true };
   }

@@ -20,6 +20,7 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
   const initials = user?.username ? USER_INITIALS[user.username] || user.display_name.slice(0, 2) : 'U';
 
   const [notifGranted, setNotifGranted] = useState(false);
+  const [showIOSModal, setShowIOSModal] = useState(false);
 
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -28,8 +29,9 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
   }, []);
 
   const handleNotificationToggle = () => {
+    // Apple iOS restriction check: Chrome on iOS doesn't support Web Notifications directly in browser tab
     if (!('Notification' in window)) {
-      alert('Browser notifications are not supported on this browser.');
+      setShowIOSModal(true);
       return;
     }
 
@@ -41,6 +43,8 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
         if (permission === 'granted') {
           setNotifGranted(true);
           sendImmediateNotification(user?.display_name || 'there');
+        } else {
+          alert('Notification permission was denied in your browser settings.');
         }
       });
     }
@@ -74,7 +78,7 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
                 }`}
               >
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
                 <span className="hidden sm:inline">Dashboard</span>
               </button>
@@ -152,6 +156,41 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
           </div>
         </div>
       </div>
+
+      {/* iPhone iOS Safari Guidance Modal */}
+      {showIOSModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-sm glass-card p-6 border-2 border-violet-500/40 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-xl flex-shrink-0">
+                📱
+              </div>
+              <div>
+                <h3 className="font-bold text-base">iPhone Push Setup</h3>
+                <p className="text-xs text-muted-foreground">Apple iOS Notification Rule</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-foreground/90 leading-relaxed">
+              Apple blocks notifications inside Chrome on iOS. To enable push notifications on your iPhone:
+            </p>
+
+            <ol className="space-y-2 text-xs text-muted-foreground list-decimal list-inside bg-muted/30 p-3 rounded-xl border border-border/50">
+              <li>Open this app link in <strong className="text-foreground">Safari</strong></li>
+              <li>Tap <strong className="text-foreground">Share (📤 icon at bottom)</strong></li>
+              <li>Tap <strong className="text-foreground">"Add to Home Screen"</strong></li>
+              <li>Open the app from your iPhone home screen & tap the Bell 🔔 icon!</li>
+            </ol>
+
+            <button
+              onClick={() => setShowIOSModal(false)}
+              className="btn-primary w-full py-2.5 text-xs font-bold"
+            >
+              Got it!
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

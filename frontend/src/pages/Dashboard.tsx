@@ -10,10 +10,17 @@ import WeeklyChart from '@/components/WeeklyChart';
 import MonthlyChart from '@/components/MonthlyChart';
 import AddEntryForm from '@/components/AddEntryForm';
 import AuditLogView from '@/components/AuditLogView';
+import UserEntriesModal from '@/components/UserEntriesModal';
 
 interface DashboardProps {
   darkMode: boolean;
   onToggleDark: () => void;
+}
+
+interface SelectedUserModalState {
+  username: string;
+  displayName: string;
+  totalScoops: number;
 }
 
 export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
@@ -25,6 +32,7 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
   const [showForm, setShowForm] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [dismissReminder, setDismissReminder] = useState(false);
+  const [selectedUserModal, setSelectedUserModal] = useState<SelectedUserModalState | null>(null);
 
   const { data: dashboard, isLoading: dashLoading } = useQuery({
     queryKey: ['dashboard'],
@@ -137,7 +145,7 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
             </h2>
             <p className="text-sm text-muted-foreground mt-0.5">
               {activeTab === 'dashboard'
-                ? 'Track your shared protein container in real time'
+                ? 'Track your shared protein container in real time · Click any user card to view entry history'
                 : 'Filter entries by calendar date, view daily breakdowns and timestamps'}
             </p>
           </div>
@@ -194,6 +202,11 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
                   remaining={dashboard.remaining}
                   totalScoops={dashboard.totalScoops}
                   percentRemaining={dashboard.percentRemaining}
+                  onSelectUser={(u) => setSelectedUserModal({
+                    username: u.username,
+                    displayName: u.display_name,
+                    totalScoops: u.total_scoops,
+                  })}
                 />
               </div>
             ) : null}
@@ -222,6 +235,16 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* User Specific Entries Modal */}
+      {selectedUserModal && (
+        <UserEntriesModal
+          username={selectedUserModal.username}
+          displayName={selectedUserModal.displayName}
+          totalScoops={selectedUserModal.totalScoops}
+          onClose={() => setSelectedUserModal(null)}
+        />
       )}
 
       <footer className="border-t border-border/30 py-4 px-6 text-center">

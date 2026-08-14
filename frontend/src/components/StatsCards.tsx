@@ -13,12 +13,13 @@ interface StatsCardsProps {
   remaining: number;
   totalScoops: number;
   percentRemaining: number;
+  onSelectUser?: (user: UserTotal) => void;
 }
 
 const USER_CONFIG = [
-  { gradient: 'from-violet-500 to-purple-600', bg: 'bg-violet-500/10', border: 'border-violet-500/20', text: 'text-violet-400', icon: '👤' },
-  { gradient: 'from-blue-500 to-cyan-600', bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', icon: '👤' },
-  { gradient: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', text: 'text-emerald-400', icon: '👤' },
+  { gradient: 'from-violet-500 to-purple-600', bg: 'bg-violet-500/10', border: 'border-violet-500/20 hover:border-violet-500/50', text: 'text-violet-400', icon: '👤' },
+  { gradient: 'from-blue-500 to-cyan-600', bg: 'bg-blue-500/10', border: 'border-blue-500/20 hover:border-blue-500/50', text: 'text-blue-400', icon: '👤' },
+  { gradient: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20 hover:border-emerald-500/50', text: 'text-emerald-400', icon: '👤' },
 ];
 
 function StatCard({
@@ -31,6 +32,8 @@ function StatCard({
   textColor,
   icon,
   progress,
+  onClick,
+  isUserCard,
 }: {
   label: string;
   value: string | number;
@@ -41,12 +44,19 @@ function StatCard({
   textColor: string;
   icon: string;
   progress?: number;
+  onClick?: () => void;
+  isUserCard?: boolean;
 }) {
   return (
-    <div className={`stat-card ${bg} border ${border}`}>
+    <div
+      onClick={onClick}
+      className={`stat-card ${bg} border ${border} ${
+        isUserCard ? 'cursor-pointer hover:scale-[1.03] hover:shadow-xl transition-all duration-200 group' : ''
+      }`}
+    >
       <div className="flex items-start justify-between">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+        <div className="flex flex-col gap-1 min-w-0">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">{label}</span>
           <span className={`text-3xl font-bold ${textColor} count-animate`}>{value}</span>
           {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
         </div>
@@ -54,6 +64,14 @@ function StatCard({
           <span className="text-lg">{icon}</span>
         </div>
       </div>
+
+      {isUserCard && (
+        <div className="mt-2 pt-2 border-t border-border/30 flex items-center justify-between text-[11px] font-semibold text-primary group-hover:translate-x-0.5 transition-transform">
+          <span>View entry history</span>
+          <span>→</span>
+        </div>
+      )}
+
       {progress !== undefined && (
         <div className="mt-2">
           <div className="flex justify-between text-xs text-muted-foreground mb-1">
@@ -72,7 +90,14 @@ function StatCard({
   );
 }
 
-export default function StatsCards({ userTotals, grandTotal, remaining, totalScoops, percentRemaining }: StatsCardsProps) {
+export default function StatsCards({
+  userTotals,
+  grandTotal,
+  remaining,
+  totalScoops,
+  percentRemaining,
+  onSelectUser,
+}: StatsCardsProps) {
   // 73 total scoops divided across 3 users = 24.3 scoops per person
   const fairSharePerUser = Math.round((totalScoops / 3) * 10) / 10;
 
@@ -93,44 +118,46 @@ export default function StatsCards({ userTotals, grandTotal, remaining, totalSco
             border={config.border}
             textColor={config.text}
             icon={config.icon}
+            isUserCard={true}
+            onClick={() => onSelectUser && onSelectUser(u)}
           />
         );
       })}
 
-      {/* Fair Share Per Person Card (Second last card before Total Consumed & Remaining) */}
+      {/* Fair Share Per Person Card */}
       <StatCard
         label="Share Per Person"
         value={fairSharePerUser}
-        sub={`${totalScoops} total ÷ 3 users`}
-        gradient="from-indigo-500 to-purple-600"
-        bg="bg-indigo-500/10"
-        border="border-indigo-500/20"
-        textColor="text-indigo-400"
+        sub="Target per user"
+        gradient="from-cyan-500 to-blue-600"
+        bg="bg-cyan-500/10"
+        border="border-cyan-500/20"
+        textColor="text-cyan-400"
         icon="⚖️"
       />
 
-      {/* Grand total */}
+      {/* Total Consumed Card */}
       <StatCard
         label="Total Consumed"
         value={grandTotal}
-        sub="all users combined"
-        gradient="from-orange-500 to-rose-600"
-        bg="bg-orange-500/10"
-        border="border-orange-500/20"
-        textColor="text-orange-400"
+        sub={`out of ${totalScoops} scoops`}
+        gradient="from-violet-500 to-purple-600"
+        bg="bg-violet-500/10"
+        border="border-violet-500/20"
+        textColor="text-violet-400"
         icon="📊"
       />
 
-      {/* Remaining in Container */}
+      {/* Remaining Powder Card */}
       <StatCard
-        label="Remaining"
+        label="Container Left"
         value={remaining}
-        sub={`of ${totalScoops} scoops`}
-        gradient={percentRemaining > 30 ? 'from-emerald-500 to-green-600' : percentRemaining > 15 ? 'from-yellow-500 to-orange-500' : 'from-red-500 to-rose-600'}
-        bg={percentRemaining > 30 ? 'bg-emerald-500/10' : percentRemaining > 15 ? 'bg-yellow-500/10' : 'bg-red-500/10'}
-        border={percentRemaining > 30 ? 'border-emerald-500/20' : percentRemaining > 15 ? 'border-yellow-500/20' : 'border-red-500/20'}
-        textColor={percentRemaining > 30 ? 'text-emerald-400' : percentRemaining > 15 ? 'text-yellow-400' : 'text-red-400'}
-        icon={percentRemaining > 30 ? '✅' : percentRemaining > 15 ? '⚠️' : '🚨'}
+        sub="scoops remaining"
+        gradient="from-amber-500 to-orange-600"
+        bg="bg-amber-500/10"
+        border="border-amber-500/20"
+        textColor="text-amber-400"
+        icon="🫙"
         progress={percentRemaining}
       />
     </div>

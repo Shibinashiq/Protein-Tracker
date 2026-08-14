@@ -1,8 +1,8 @@
-name: 3-Hour Protein Tracker Push Notifications Cron
+name: Protein & Water Push Notifications Cron
 
 on:
   schedule:
-    - cron: '0 */3 * * *' # Every 3 hours via GitHub Actions
+    - cron: '0 * * * *' # Hourly check for Water & Protein Reminders
   workflow_dispatch:
 
 jobs:
@@ -39,30 +39,67 @@ jobs:
 
           webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
+          function getWaterReminder(istHour, name) {
+            if (istHour === 11) {
+              return {
+                title: '💧 Water Check (1.5 Liters)',
+                body: \`💧 Hey \${name}! Have you completed 1.5 liters of water so far today? Stay hydrated and keep going!\`,
+              };
+            }
+            if (istHour === 13) {
+              return {
+                title: '💧 Water Check (2.5 Liters)',
+                body: \`💧 Hey \${name}! Time for another water check. Have you drank 1 more liter and reached 2.5 liters today?\`,
+              };
+            }
+            if (istHour === 17) {
+              return {
+                title: '💧 Water Check (3.0 Liters)',
+                body: \`💧 Hey \${name}! Have you completed 3 liters of water intake today? You're doing great—keep it up!\`,
+              };
+            }
+            if (istHour === 21) {
+              return {
+                title: '💧 Final Water Check (4.0 Liters)',
+                body: \`💧 Hey \${name}! Final check for today. Have you completed your 4-liter daily water goal? Finish strong and stay healthy! 💪💧\`,
+              };
+            }
+            return null;
+          }
+
           async function sendPush() {
             const today = new Date().toISOString().slice(0, 10);
+            const date = new Date();
+            const istHour = parseInt(date.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', hour12: false }), 10);
+
             const { data: logs } = await supabase.from('consumption_logs').select('user_id').eq('date', today);
             const loggedUserIds = new Set((logs ?? []).map(l => l.user_id));
 
             const { data: subs } = await supabase.from('push_subscriptions').select('*');
             for (const sub of (subs || [])) {
-              if (loggedUserIds.has(sub.user_id)) {
-                console.log('Skipped user already logged today:', sub.username);
-                continue;
-              }
               const displayNames = { shibin: 'Shibin', niveditha: 'Niveditha', nithin: 'Nithin' };
-              const name = displayNames[sub.username] || sub.username;
+              const name = displayNames[sub.username.toLowerCase()] || sub.username;
               const pushSubscription = { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } };
-              const payload = JSON.stringify({
-                title: '⏰ Protein Tracker Reminder',
-                body: \`Hey \${name}, don't forget your daily protein scoop! Tap to log +1 scoop ⚡\`,
-                url: '/'
-              });
-              try {
-                const res = await webpush.sendNotification(pushSubscription, payload);
-                console.log('SENT SUCCESS to:', sub.username, 'Status:', res.statusCode);
-              } catch (err) {
-                console.error('Push err:', err.statusCode, err.message);
+
+              const payloads = [];
+              const waterCheck = getWaterReminder(istHour, name);
+              if (waterCheck) payloads.push(waterCheck);
+
+              // Protein Scoop reminder (every 3 hours if not logged today)
+              if (!waterCheck && istHour % 3 === 0 && !loggedUserIds.has(sub.user_id)) {
+                payloads.push({
+                  title: '⏰ Protein Scoop Reminder',
+                  body: \`Hey \${name}, don't forget your daily protein scoop! Tap to log +1 scoop ⚡\`,
+                });
+              }
+
+              for (const payload of payloads) {
+                try {
+                  const res = await webpush.sendNotification(pushSubscription, JSON.stringify({ ...payload, url: '/' }));
+                  console.log('SENT SUCCESS to:', name, 'Title:', payload.title, 'Status:', res.statusCode);
+                } catch (err) {
+                  console.error('Push err:', err.statusCode, err.message);
+                }
               }
             }
           }

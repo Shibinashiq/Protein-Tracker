@@ -69,7 +69,6 @@ export async function subscribeToPush(userId: string, username: string, displayN
       {
         user_id: userId,
         username,
-        display_name: displayName || username,
         endpoint,
         p256dh: keys.p256dh,
         auth: keys.auth,

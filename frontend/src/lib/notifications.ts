@@ -12,12 +12,19 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
 }
 
+export interface SubscribeResult {
+  status: 'granted' | 'denied' | 'unsupported' | 'ios';
+  savedToDb: boolean;
+  error?: string;
+}
+
 // ─── Subscribe & save to Supabase ─────────────────────────────────────────────
-export async function subscribeToPush(userId: string, username: string): Promise<boolean> {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+export async function subscribeToPush(userId: string, username: string): Promise<{ success: boolean; error?: string }> {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return { success: false, error: 'Push notifications not supported on this browser' };
+  }
   if (!VAPID_PUBLIC_KEY) {
-    console.warn('VITE_VAPID_PUBLIC_KEY is not set');
-    return false;
+    return { success: false, error: 'VITE_VAPID_PUBLIC_KEY environment variable missing' };
   }
 
   try {
@@ -48,35 +55,36 @@ export async function subscribeToPush(userId: string, username: string): Promise
 
     if (error) {
       console.error('Failed to save push subscription:', error);
-      return false;
+      return { success: false, error: error.message };
     }
-    return true;
-  } catch (err) {
+    return { success: true };
+  } catch (err: any) {
     console.error('Push subscribe error:', err);
-    return false;
+    return { success: false, error: err?.message || 'Failed to subscribe' };
   }
 }
 
 // ─── Request Permission + Subscribe ───────────────────────────────────────────
-export async function requestAndSubscribe(userId: string, username: string, displayName: string): Promise<'granted' | 'denied' | 'unsupported' | 'ios'> {
-  if (!('Notification' in window)) return 'ios';
+export async function requestAndSubscribe(userId: string, username: string, displayName: string): Promise<SubscribeResult> {
+  if (!('Notification' in window)) return { status: 'ios', savedToDb: false };
 
   let permission = Notification.permission;
   if (permission === 'default') {
     permission = await Notification.requestPermission();
   }
 
-  if (permission !== 'granted') return 'denied';
+  if (permission !== 'granted') return { status: 'denied', savedToDb: false };
 
-  const subscribed = await subscribeToPush(userId, username);
-  if (subscribed) {
-    // Show immediate confirmation notification
+  const subRes = await subscribeToPush(userId, username);
+  if (subRes.success) {
     sendLocalNotification(
       '💪 Protein Tracker — Reminders Active!',
       `Hey ${displayName}, reminders are ACTIVE! You will be reminded every 2 minutes if you forget to log your protein scoop.`
     );
+    return { status: 'granted', savedToDb: true };
   }
-  return 'granted';
+
+  return { status: 'granted', savedToDb: false, error: subRes.error };
 }
 
 // ─── Local in-browser notification (only works when app is open) ───────────────

@@ -24,6 +24,7 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
   const [notifState, setNotifState] = useState<'idle' | 'granted' | 'denied' | 'loading'>('idle');
   const [showIOSModal, setShowIOSModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [notifModalInfo, setNotifModalInfo] = useState<{ title: string; message: string; success: boolean } | null>(null);
 
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'granted' && session?.user?.id && user?.username) {
@@ -38,13 +39,31 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
     setNotifState('loading');
     const result = await requestAndSubscribe(session.user.id, user.username, user.display_name);
 
-    if (result === 'ios') {
+    if (result.status === 'ios') {
       setShowIOSModal(true);
       setNotifState('idle');
-    } else if (result === 'granted') {
+    } else if (result.status === 'granted') {
       setNotifState('granted');
+      if (result.savedToDb) {
+        setNotifModalInfo({
+          title: '🔔 Reminders Active! (2-Min Gap)',
+          message: `Hey ${user.display_name}, your phone token is registered in Supabase! You will receive background notifications every 2 minutes if you haven't logged protein today.`,
+          success: true,
+        });
+      } else {
+        setNotifModalInfo({
+          title: '⚠️ Database RLS Permission Required',
+          message: `Notification permission is granted on your phone, BUT your Supabase database blocked saving the token due to RLS policies. Please run the SQL script in Supabase SQL Editor to enable 2-minute background push notifications!\n\nError: ${result.error || 'Row-level security policy violation'}`,
+          success: false,
+        });
+      }
     } else {
       setNotifState('denied');
+      setNotifModalInfo({
+        title: '❌ Notifications Blocked',
+        message: 'Push notifications are blocked in your phone settings. Please enable notifications for Safari/Chrome in iPhone Settings.',
+        success: false,
+      });
     }
   };
 
@@ -104,7 +123,7 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
 
           {/* Right side controls */}
           <div className="flex items-center gap-1.5 sm:gap-3">
-            {/* Manual Refresh / Update App Button (Essential for iOS Standalone PWA) */}
+            {/* Manual Refresh / Update App Button */}
             <button
               onClick={handleManualRefresh}
               disabled={isRefreshing}
@@ -194,6 +213,40 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
           </div>
         </div>
       </div>
+
+      {/* Notification Status Modal */}
+      {notifModalInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className={`w-full max-w-sm glass-card p-6 border-2 shadow-2xl space-y-4 ${
+            notifModalInfo.success ? 'border-amber-500/50' : 'border-red-500/50'
+          }`}>
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 border ${
+                notifModalInfo.success ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-red-500/20 border-red-500/40 text-red-400'
+              }`}>
+                {notifModalInfo.success ? '🔔' : '⚠️'}
+              </div>
+              <div>
+                <h3 className="font-bold text-base">{notifModalInfo.title}</h3>
+                <p className="text-xs text-muted-foreground">Notification Status</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-foreground/90 leading-relaxed whitespace-pre-line bg-muted/30 p-3 rounded-xl border border-border/50">
+              {notifModalInfo.message}
+            </p>
+
+            <button
+              onClick={() => setNotifModalInfo(null)}
+              className={`w-full py-2.5 text-xs font-bold rounded-xl transition-all ${
+                notifModalInfo.success ? 'btn-primary' : 'bg-red-500 hover:bg-red-600 text-white'
+              }`}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* iPhone iOS Safari Guidance Modal */}
       {showIOSModal && (

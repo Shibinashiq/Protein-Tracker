@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth, USER_INITIALS } from '@/lib/auth';
+import { sendImmediateNotification } from '@/lib/notifications';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -17,6 +18,33 @@ const USER_COLORS: Record<string, string> = {
 export default function Header({ darkMode, onToggleDark, activeTab, onTabChange }: HeaderProps) {
   const { user, logout } = useAuth();
   const initials = user?.username ? USER_INITIALS[user.username] || user.display_name.slice(0, 2) : 'U';
+
+  const [notifGranted, setNotifGranted] = useState(false);
+
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      setNotifGranted(true);
+    }
+  }, []);
+
+  const handleNotificationToggle = () => {
+    if (!('Notification' in window)) {
+      alert('Browser notifications are not supported on this browser.');
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      setNotifGranted(true);
+      sendImmediateNotification(user?.display_name || 'there');
+    } else {
+      Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+          setNotifGranted(true);
+          sendImmediateNotification(user?.display_name || 'there');
+        }
+      });
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -46,7 +74,7 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
                 }`}
               >
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
                 <span className="hidden sm:inline">Dashboard</span>
               </button>
@@ -69,6 +97,21 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
 
           {/* Right side controls */}
           <div className="flex items-center gap-1.5 sm:gap-3">
+            {/* Notification Bell toggle */}
+            <button
+              onClick={handleNotificationToggle}
+              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all duration-200 hover:shadow-md ${
+                notifGranted
+                  ? 'border-amber-500/40 bg-amber-500/10 text-amber-400'
+                  : 'border-border bg-muted/30 hover:bg-muted/60 text-muted-foreground hover:text-foreground'
+              }`}
+              title={notifGranted ? 'Notifications Active (Click for instant test notification)' : 'Enable Notifications'}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            </button>
+
             {/* Dark mode toggle */}
             <button
               onClick={onToggleDark}

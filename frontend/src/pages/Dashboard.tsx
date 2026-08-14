@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { fetchDashboard, fetchWeekly, fetchMonthly, addLog } from '@/lib/queries';
+import { fetchDashboard, fetchWeekly, fetchMonthly, fetchLogs, addLog } from '@/lib/queries';
 import { useAuth } from '@/lib/auth';
+import { checkAndSend3HourReminder } from '@/lib/notifications';
 import Header from '@/components/Header';
 import StatsCards from '@/components/StatsCards';
 import WeeklyChart from '@/components/WeeklyChart';
@@ -23,10 +24,17 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'audit'>('dashboard');
   const [showForm, setShowForm] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [dismissReminder, setDismissReminder] = useState(false);
 
   const { data: dashboard, isLoading: dashLoading } = useQuery({
     queryKey: ['dashboard'],
     queryFn: fetchDashboard,
+    refetchInterval: 30000,
+  });
+
+  const { data: logsData } = useQuery({
+    queryKey: ['logs'],
+    queryFn: fetchLogs,
     refetchInterval: 30000,
   });
 
@@ -41,6 +49,19 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
     queryFn: fetchMonthly,
     refetchInterval: 30000,
   });
+
+  // Check if current active user has logged a scoop today
+  const userLogsToday = (logsData ?? []).filter(
+    (l) => l.date === todayStr && l.username === user?.username
+  );
+  const hasLoggedToday = userLogsToday.length > 0;
+
+  // Trigger 3-hour interval notification reminder if user hasn't logged today
+  useEffect(() => {
+    if (user?.display_name && logsData) {
+      checkAndSend3HourReminder(user.display_name, hasLoggedToday);
+    }
+  }, [user?.display_name, hasLoggedToday, logsData]);
 
   // Quick 1-Tap +1 Scoop Mutation
   const quickLogMutation = useMutation({
@@ -74,6 +95,40 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
       />
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Daily Protein Reminder Banner if user hasn't logged today */}
+        {!hasLoggedToday && !dismissReminder && user && (
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-violet-500/15 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-xl flex-shrink-0">
+                🔔
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-foreground">Daily Protein Reminder</h4>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Hey <span className="font-bold text-foreground">{user.display_name}</span>, you haven't logged your protein scoop for today yet!
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => quickLogMutation.mutate()}
+                disabled={quickLogMutation.isPending}
+                className="btn-primary py-2 px-4 text-xs font-bold shadow-md shadow-violet-500/20 whitespace-nowrap"
+              >
+                ⚡ +1 Scoop Now
+              </button>
+              <button
+                onClick={() => setDismissReminder(true)}
+                className="p-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                title="Dismiss reminder"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Top Header Bar & Action Buttons */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
           <div>

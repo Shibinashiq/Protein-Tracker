@@ -1,5 +1,5 @@
 // Supabase Edge Function: send-reminders
-// Triggered every 3 hours by pg_cron or Supabase Scheduler
+// Triggered every 2 minutes by pg_cron or Supabase Scheduler
 // Sends push notifications to users who haven't logged a protein scoop today
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';

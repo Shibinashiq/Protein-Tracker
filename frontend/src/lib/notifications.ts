@@ -73,7 +73,7 @@ export async function requestAndSubscribe(userId: string, username: string, disp
     // Show immediate confirmation notification
     sendLocalNotification(
       '💪 Protein Tracker — Reminders Active!',
-      `Hey ${displayName}, you'll get a reminder every 3 hours if you forget to log your protein scoop.`
+      `Hey ${displayName}, reminders are ACTIVE! You will be reminded every 2 minutes if you forget to log your protein scoop.`
     );
   }
   return 'granted';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, USER_INITIALS } from '@/lib/auth';
-import { requestAndSubscribe } from '@/lib/notifications';
+import { requestAndSubscribe, subscribeToPush } from '@/lib/notifications';
 import { useAppUpdate } from '@/lib/useAppUpdate';
 
 interface HeaderProps {
@@ -26,10 +26,11 @@ export default function Header({ darkMode, onToggleDark, activeTab, onTabChange 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'granted') {
+    if ('Notification' in window && Notification.permission === 'granted' && session?.user?.id && user?.username) {
       setNotifState('granted');
+      subscribeToPush(session.user.id, user.username);
     }
-  }, []);
+  }, [session?.user?.id, user?.username]);
 
   const handleNotificationToggle = async () => {
     if (!session?.user?.id || !user) return;
